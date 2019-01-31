@@ -9,6 +9,10 @@ services:
     environment:
       - "INVENIO_SESSION_COOKIE_SECURE=False"
       - "INVENIO_STATSD_HOST="
+      - VIRTUAL_HOST=zenodo.ubuntunet.net
+      - VIRTUAL_PORT=5000
+      - LETSENCRYPT_EMAIL=repository@ubuntunet.net
+      - LETSENCRYPT_HOST=zenodo.ubuntunet.net
     ports:
       - "5000:5000"
     links:
@@ -18,6 +22,9 @@ services:
       - db
     volumes_from:
       - static
+    networks:
+      - zenodo-net
+      - nginx-proxy
   worker:
     extends:
       file: docker-services.yml
@@ -31,6 +38,8 @@ services:
       - db
     volumes_from:
       - static
+    networks:
+      - zenodo-net
   static:
     extends:
       file: docker-services.yml
@@ -43,6 +52,9 @@ services:
       - "/usr/local/lib/python3.5/site-packages"
       - "/usr/local/var/data"
       - ".:/code/zenodo"
+    networks:
+      - zenodo-net
+
   # Monitoring
   flower:
     extends:
@@ -50,26 +62,44 @@ services:
       service: flower
     links:
       - mq
+    networks:
+      - zenodo-net
+
   # Base services
   cache:
     extends:
       file: docker-services.yml
       service: cache
+    networks:
+      - zenodo-net
   db:
     extends:
       file: docker-services.yml
       service: db
+    networks:
+      - zenodo-net
   mq:
     extends:
       file: docker-services.yml
       service: mq
+    networks:
+      - zenodo-net
   es:
     extends:
       file: docker-services.yml
       service: es
+    networks:
+      - zenodo-net
   kibana:
     extends:
       file: docker-services.yml
       service: kibana
     links:
       - es
+    networks:
+      - zenodo-net
+
+networks:
+  zenodo-net:
+  nginx-proxy:
+    external: true
